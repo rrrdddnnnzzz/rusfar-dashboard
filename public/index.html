@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RUSFAR Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&family=Onest:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg:#0d0f14;--bg2:#13161e;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+    --blue:#3b82f6;--blue-dim:rgba(59,130,246,.14);--teal:#2dd4bf;--teal-dim:rgba(45,212,191,.12);
+    --green:#4ade80;--green-dim:rgba(74,222,128,.12);--red:#f87171;--red-dim:rgba(248,113,113,.12);
+    --amber:#fbbf24;--text1:#f1f5f9;--text2:#94a3b8;--text3:#475569;
+    --mono:'Martian Mono',monospace;--sans:'Onest',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text1);min-height:100vh;padding:1.5rem}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  .wrap{max-width:1000px;margin:0 auto;position:relative;z-index:1}
+  .header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+  h1{font-size:1.5rem;font-weight:500;letter-spacing:-.01em}
+  .header-right{text-align:right;font-family:var(--mono);font-size:11px;color:var(--text3);line-height:1.8}
+  .header-right .time{color:var(--text2);font-size:13px}
+  .err{display:none;background:var(--red-dim);border:1px solid rgba(248,113,113,.25);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--red);margin-bottom:10px}
+  .hero{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .hero-card{background:var(--bg2);border-radius:14px;padding:20px 22px;border:1px solid var(--border);position:relative;overflow:hidden}
+  .hero-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px}
+  .hero-card.rt::before{background:linear-gradient(90deg,transparent,var(--teal),transparent)}
+  .hero-card.fix::before{background:linear-gradient(90deg,transparent,var(--blue),transparent)}
+  .hero-card.rt{border-left:2.5px solid var(--teal)}
+  .hero-card.fix{border-left:2.5px solid var(--blue)}
+  .glow{position:absolute;width:220px;height:220px;border-radius:50%;top:-70px;right:-50px;filter:blur(65px);pointer-events:none;opacity:.16}
+  .rt .glow{background:var(--teal)}.fix .glow{background:var(--blue)}
+  .card-label{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .name-rt{color:var(--teal)}.name-fix{color:var(--blue)}
+  .badge{font-size:10px;font-weight:500;padding:2px 8px;border-radius:4px;font-family:var(--mono);letter-spacing:.05em}
+  .badge-live{background:var(--green-dim);color:var(--green)}
+  .badge-fix{background:var(--blue-dim);color:var(--blue)}
+  .badge-manual{background:rgba(251,191,36,.14);color:var(--amber);cursor:pointer}
+  .live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px;vertical-align:middle;animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(74,222,128,.5)}50%{opacity:.7;box-shadow:0 0 0 5px rgba(74,222,128,0)}}
+  .big{font-family:var(--mono);font-size:clamp(2.8rem,5.5vw,3.8rem);font-weight:300;line-height:1;letter-spacing:-.02em;margin-bottom:16px;display:flex;align-items:baseline;gap:6px}
+  .big .pct{font-size:.38em;opacity:.5}
+  .rt-color{color:var(--teal)}.fix-color{color:var(--blue)}
+  .delta{display:inline-flex;align-items:center;font-family:var(--mono);font-size:12px;font-weight:500;padding:3px 9px;border-radius:5px;margin-left:8px}
+  .delta.up{background:var(--green-dim);color:var(--green)}
+  .delta.down{background:var(--red-dim);color:var(--red)}
+  .subs{display:flex;align-items:center;margin-top:4px}
+  .sub{flex:1}
+  .sub-l{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+  .sub-v{font-family:var(--mono);font-size:15px;color:var(--text2)}
+  .sub-v.red{color:var(--red)}.sub-v.green{color:var(--green)}.sub-v.amber{color:var(--amber)}
+  .divv{width:1px;height:32px;background:var(--border2);margin:0 14px;flex-shrink:0}
+  .hint{margin-top:14px;font-size:11px;color:var(--text3);padding:7px 10px;background:rgba(255,255,255,.03);border-radius:6px;border:1px solid var(--border);font-family:var(--mono)}
+  .sec{display:grid;grid-template-columns:repeat(4,1fr) 1.6fr;gap:10px;margin-bottom:10px}
+  .tc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 14px}
+  .tn{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;margin-bottom:10px}
+  .tv{font-family:var(--mono);font-size:1.3rem;color:var(--text1);margin-bottom:6px}
+  .td{font-family:var(--mono);font-size:11px}
+  .ts{font-size:10px;color:var(--text3);margin-top:3px}
+  .curve{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 14px}
+  .st{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
+  .hist{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px}
+  .hh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .pbs{display:flex;gap:6px}
+  .pb{font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text3);letter-spacing:.06em}
+  .pb.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .footer{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.05em}
+  .skel{animation:shim 1.5s ease-in-out infinite}
+  @keyframes shim{0%,100%{opacity:.25}50%{opacity:.6}}
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+  .modal.open{display:flex}
+  .modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:24px;width:340px}
+  .modal-box h3{font-size:15px;margin-bottom:16px}
+  .modal-box label{display:block;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px;margin-top:12px}
+  .modal-box input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;color:var(--text1);font-family:var(--mono);font-size:14px}
+  .modal-btns{display:flex;gap:8px;margin-top:20px}
+  .modal-btns button{flex:1;padding:10px;border-radius:8px;font-family:var(--sans);font-size:13px;cursor:pointer;border:none}
+  .btn-save{background:var(--blue);color:#fff}
+  .btn-cancel{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+  @media(max-width:700px){.hero{grid-template-columns:1fr}.sec{grid-template-columns:repeat(2,1fr)}.sec>:last-child{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div><div class="eyebrow">МосБиржа · Денежный рынок</div><h1>RUSFAR Dashboard</h1></div>
+    <div class="header-right"><div class="time" id="clock">—</div><div id="dt">—</div><div id="cd"></div></div>
+  </div>
+  <div class="err" id="err"></div>
+  <div class="hero">
+    <div class="hero-card rt">
+      <div class="glow"></div>
+      <div class="card-label">
+        <span class="name-rt">RUSFARREALTIME o/n</span>
+        <span class="badge badge-live" id="rt-badge"><span class="live-dot"></span>LIVE</span>
+      </div>
+      <div class="big rt-color"><span id="rt-v" class="skel">——.——</span><span class="pct">%</span><span id="rt-d" class="delta" style="display:none"></span></div>
+      <div class="subs">
+        <div class="sub"><div class="sub-l">Фикс 12:30</div><div class="sub-v" id="rt-o">——</div></div>
+        <div class="divv"></div>
+        <div class="sub"><div class="sub-l">Спред к КС</div><div class="sub-v" id="rt-s">——</div></div>
+        <div class="divv"></div>
+        <div class="sub"><div class="sub-l">Обновлено</div><div class="sub-v" id="rt-t">——</div></div>
+      </div>
+      <div class="hint" id="rt-hint">Последнее актуальное значение (обновляется до 19:00)</div>
+    </div>
+    <div class="hero-card fix">
+      <div class="glow"></div>
+      <div class="card-label">
+        <span class="name-fix">RUSFAR o/n</span>
+        <span class="badge badge-fix">ФИКС o/n · 12:30 МСК</span>
+        <span class="badge badge-manual" id="manual-btn" title="Ввести вручную">✎ ввод</span>
+      </div>
+      <div class="big fix-color"><span id="fix-v" class="skel">——.——</span><span class="pct">%</span><span id="fix-d" class="delta" style="display:none"></span></div>
+      <div class="subs">
+        <div class="sub"><div class="sub-l">Последнее</div><div class="sub-v" id="fix-o">——</div></div>
+        <div class="divv"></div>
+        <div class="sub"><div class="sub-l">Спред к КС</div><div class="sub-v" id="fix-s">——</div></div>
+        <div class="divv"></div>
+        <div class="sub"><div class="sub-l">Дата</div><div class="sub-v" id="fix-dt">——</div></div>
+      </div>
+      <div class="hint" id="fix-hint">Зафиксировано в 12:30 МСК</div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="tc"><div class="tn" style="color:#2dd4bf">1W</div><div class="tv skel" id="v-1W">——</div><div class="td" id="d-1W"></div><div class="ts">1 неделя</div></div>
+    <div class="tc"><div class="tn" style="color:#a78bfa">2W</div><div class="tv skel" id="v-2W">——</div><div class="td" id="d-2W"></div><div class="ts">2 недели</div></div>
+    <div class="tc"><div class="tn" style="color:#fb923c">1M</div><div class="tv skel" id="v-1M">——</div><div class="td" id="d-1M"></div><div class="ts">1 месяц</div></div>
+    <div class="tc"><div class="tn" style="color:#f472b6">3M</div><div class="tv skel" id="v-3M">——</div><div class="td" id="d-3M"></div><div class="ts">3 месяца</div></div>
+    <div class="curve"><div class="st">Кривая ставок</div><svg id="curve-svg" width="100%" viewBox="0 0 280 90" style="overflow:visible"></svg></div>
+  </div>
+  <div class="hist">
+    <div class="hh"><div class="st" style="margin:0">Динамика RUSFAR o/n · фикс 12:30 МСК</div>
+      <div class="pbs"><button class="pb" data-n="3">3М</button><button class="pb active" data-n="6">6М</button><button class="pb" data-n="13">1Г</button></div>
+    </div>
+    <svg id="hist-svg" width="100%" viewBox="0 0 640 130" style="overflow:visible"></svg>
+  </div>
+  <div class="footer"><span>Источник: MOEX ISS API · ЦБ РФ</span><span id="fts">Фикс RUSFAR o/n в 12:30 МСК</span></div>
+</div>
+
+<!-- Manual input modal -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3>Ввести RUSFAR o/n вручную</h3>
+    <label>Значение, %</label>
+    <input type="number" id="m-val" step="0.01" placeholder="14.08"/>
+    <label>Дата</label>
+    <input type="text" id="m-date" placeholder="01.06.2026"/>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="m-cancel">Отмена</button>
+      <button class="btn-save" id="m-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Ключевая ставка ЦБ РФ (текущая)
+const KEY_RATE = 15.0;
+const POLL_MS  = 60000;
+
+// История загружается из API; fallback если API недоступен
+let HISTORY = [];
+let historyLoaded = false;
+
+const $ = id => document.getElementById(id);
+const f2 = v => v != null && !isNaN(v) ? Number(v).toFixed(2) : '——';
+const fmtDate = s => s ? (s.includes('-') ? s.split('-').reverse().join('.') : s) : '——';
+
+function spread(val) {
+  if (val == null) return { str: '——', cls: '' };
+  const s = +(val - KEY_RATE).toFixed(2);
+  return { str: (s > 0 ? '+' : '') + s.toFixed(2) + ' пп', cls: Math.abs(s) < 0.5 ? 'amber' : s > 0 ? 'green' : 'red' };
+}
+
+function mkDelta(cur, base) {
+  if (base == null || cur == null) return null;
+  const d = +(cur - base).toFixed(2);
+  if (d === 0) return { str: '0.00%', cls: 'up' };
+  return { str: (d > 0 ? '▲ +' : '▼ ') + Math.abs(d).toFixed(2) + '%', cls: d >= 0 ? 'up' : 'down' };
+}
+
+// Ручной ввод ON (если API не отдаёт)
+let manualON = null;
+
+// Clock
+let cd = 60;
+function clock() {
+  const n = new Date();
+  $('clock').textContent = n.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  $('dt').textContent = n.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+setInterval(clock, 1000); clock();
+setInterval(() => { cd = Math.max(0, cd - 1); $('cd').textContent = `опрос через ${cd} с`; }, 1000);
+
+// Curve
+function drawCurve(rates) {
+  const svg = $('curve-svg'), W = 280, H = 90, PL = 8, PR = 8, PT = 18, PB = 24;
+  const terms = [['ON', '#3b82f6'], ['1W', '#2dd4bf'], ['2W', '#a78bfa'], ['1M', '#fb923c'], ['3M', '#f472b6']];
+  const pts = terms.map(([t, c]) => ({ t, c, v: rates[t] != null ? +rates[t] : null })).filter(p => p.v !== null);
+  if (pts.length < 2) { svg.innerHTML = ''; return; }
+  const vals = pts.map(p => p.v), mn = Math.min(...vals) - .03, mx = Math.max(...vals) + .03;
+  const sx = i => PL + (i / (pts.length - 1)) * (W - PL - PR);
+  const sy = v => PT + (1 - (v - mn) / (mx - mn)) * (H - PT - PB);
+  const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${sx(i).toFixed(1)},${sy(p.v).toFixed(1)}`).join(' ');
+  const fill = path + ` L${sx(pts.length - 1).toFixed(1)},${H - PB} L${sx(0).toFixed(1)},${H - PB} Z`;
+  let h = `<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity=".15"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs><path d="${fill}" fill="url(#cg)"/><path d="${path}" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  pts.forEach((p, i) => {
+    const cx = sx(i).toFixed(1), cy = sy(p.v).toFixed(1);
+    h += `<circle cx="${cx}" cy="${cy}" r="${i === 0 ? 5 : 3.5}" fill="${p.c}" opacity="${i === 0 ? 1 : .7}"/>`;
+    h += `<text x="${cx}" y="${+cy - 10}" text-anchor="middle" style="font-family:var(--mono);font-size:9px;fill:${p.c};font-weight:${i === 0 ? 700 : 400}">${f2(p.v)}%</text>`;
+    h += `<text x="${cx}" y="${H - PB + 13}" text-anchor="middle" style="font-family:var(--mono);font-size:9px;fill:${i === 0 ? '#94a3b8' : '#475569'};font-weight:${i === 0 ? 700 : 400}">${p.t}</text>`;
+  });
+  svg.innerHTML = h;
+}
+
+// History chart
+function drawHist(data) {
+  const svg = $('hist-svg'), W = 640, H = 130, PL = 10, PR = 20, PT = 14, PB = 36;
+  if (!data || data.length < 2) { svg.innerHTML = ''; return; }
+  const allV = [...data.map(d => d.on), ...data.map(d => d.ks)];
+  const mn = Math.min(...allV) - .5, mx = Math.max(...allV) + .2;
+  const sx = i => PL + (i / (data.length - 1)) * (W - PL - PR);
+  const sy = v => PT + (1 - (v - mn) / (mx - mn)) * (H - PT - PB);
+  const onP = data.map((d, i) => `${i === 0 ? 'M' : 'L'}${sx(i).toFixed(1)},${sy(d.on).toFixed(1)}`).join(' ');
+  const ksP = data.map((d, i) => `${i === 0 ? 'M' : 'L'}${sx(i).toFixed(1)},${sy(d.ks).toFixed(1)}`).join(' ');
+  const onF = onP + ` L${sx(data.length - 1).toFixed(1)},${H - PB} L${sx(0).toFixed(1)},${H - PB} Z`;
+  const grid = [];
+  for (let v = Math.ceil(mn); v <= Math.floor(mx); v += 2) grid.push(v);
+  const xi = data.map((_, i) => (i === 0 || i === data.length - 1 || i % Math.max(1, Math.floor(data.length / 5)) === 0) ? i : null).filter(i => i !== null);
+  let h = `<defs><linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity=".18"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>`;
+  grid.forEach(v => {
+    h += `<line x1="${PL}" y1="${sy(v).toFixed(1)}" x2="${W - PR}" y2="${sy(v).toFixed(1)}" stroke="rgba(255,255,255,.05)" stroke-width=".5" stroke-dasharray="3 5"/>`;
+    h += `<text x="${PL - 2}" y="${sy(v) + 4}" text-anchor="end" style="font-family:var(--mono);font-size:9px;fill:#475569">${v}%</text>`;
+  });
+  h += `<path d="${ksP}" fill="none" stroke="#f87171" stroke-width="1" stroke-dasharray="5 4" opacity=".45"/>`;
+  h += `<path d="${onF}" fill="url(#hg)"/>`;
+  h += `<path d="${onP}" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const lx = sx(data.length - 1).toFixed(1), ly = sy(data[data.length - 1].on).toFixed(1);
+  h += `<circle cx="${lx}" cy="${ly}" r="8" fill="#3b82f6" opacity=".15"/>`;
+  h += `<circle cx="${lx}" cy="${ly}" r="4" fill="#3b82f6"/>`;
+  xi.forEach(i => { h += `<text x="${sx(i).toFixed(1)}" y="${H - PB + 16}" text-anchor="middle" style="font-family:var(--mono);font-size:9px;fill:#475569">${data[i].m}</text>`; });
+  h += `<line x1="${PL}" y1="${H + 4}" x2="${PL + 22}" y2="${H + 4}" stroke="#3b82f6" stroke-width="2"/>`;
+  h += `<text x="${PL + 26}" y="${H + 4}" dominant-baseline="central" style="font-family:var(--mono);font-size:9px;fill:#94a3b8">RUSFAR o/n</text>`;
+  h += `<line x1="${PL + 120}" y1="${H + 4}" x2="${PL + 140}" y2="${H + 4}" stroke="#f87171" stroke-width="1" stroke-dasharray="5 4" opacity=".7"/>`;
+  h += `<text x="${PL + 144}" y="${H + 4}" dominant-baseline="central" style="font-family:var(--mono);font-size:9px;fill:#94a3b8">Ключевая ставка</text>`;
+  svg.innerHTML = h;
+}
+
+// Render current data
+function render(d) {
+  $('err').style.display = 'none';
+
+  // ── ON: open = фикс 12:30, value = актуальное (последнее) ──
+  const apiON = d.ON;
+  let onFix, onLast, onDate, onIsManual = false;
+  if (apiON && (apiON.open != null || apiON.value != null)) {
+    // OPENVALUE = фикс 12:30, LASTVALUE = актуальное
+    onFix  = apiON.open  ?? apiON.value;
+    onLast = apiON.value ?? apiON.open;
+    onDate = apiON.tradeDate;
+  } else if (manualON) {
+    onFix = manualON.value; onLast = manualON.value; onDate = manualON.date; onIsManual = true;
+  }
+
+  const onVal = onFix;   // главное значение на фикс-карточке = фикс 12:30
+
+  // ── RT (реалтайм) ──
+  const rt = d.RT;
+  let rtVal = rt?.value ?? rt?.open;
+  let rtIsManual = false;
+  if (rtVal == null) { rtVal = onLast; rtIsManual = true; }
+
+  // Render RT card
+  if (rtVal != null) {
+    $('rt-v').textContent = f2(rtVal); $('rt-v').classList.remove('skel');
+    const dl = mkDelta(rtVal, rt?.open ?? onFix);
+    if (dl) { $('rt-d').textContent = dl.str; $('rt-d').className = `delta ${dl.cls}`; $('rt-d').style.display = 'inline-flex'; }
+    $('rt-o').textContent = (rt?.open != null) ? f2(rt.open) + '%' : (onFix != null ? f2(onFix) + '%' : '——');
+    $('rt-t').textContent = rt?.updateTime || '——';
+    const sp = spread(rtVal); $('rt-s').textContent = sp.str; $('rt-s').className = `sub-v ${sp.cls}`;
+    if (rtIsManual) { $('rt-badge').innerHTML = '= ON'; $('rt-hint').textContent = 'RT недоступен · показано значение фикса'; }
+  }
+
+  // Render fix ON card
+  if (onVal != null) {
+    $('fix-v').textContent = f2(onVal); $('fix-v').classList.remove('skel');
+    const dl = mkDelta(onVal, onLast);
+    if (dl) { $('fix-d').textContent = dl.str; $('fix-d').className = `delta ${dl.cls}`; $('fix-d').style.display = 'inline-flex'; }
+    $('fix-o').textContent = onLast != null ? f2(onLast) + '%' : '——';
+    $('fix-dt').textContent = fmtDate(onDate);
+    const sp = spread(onVal); $('fix-s').textContent = sp.str; $('fix-s').className = `sub-v ${sp.cls}`;
+    $('fts').textContent = `Фикс 12:30 МСК · ${fmtDate(onDate)}`;
+    $('fix-hint').textContent = onIsManual ? '⚠ Введено вручную · API не отдаёт ON' : 'Официальное дневное значение · фикс 12:30 МСК';
+
+    // Обновляем последнюю точку истории
+    if (HISTORY.length) {
+      const last = HISTORY[HISTORY.length - 1];
+      if (last) last.on = onVal;
+      rh();
+    }
+  }
+
+  // Secondary terms
+  ['1W', '2W', '1M', '3M'].forEach(t => {
+    const td = d[t]; if (!td) return;
+    const last = td.value;
+    const fix  = td.open;
+    if (last != null) { $(`v-${t}`).textContent = f2(last) + '%'; $(`v-${t}`).classList.remove('skel'); }
+    const sub = $(`d-${t}`);
+    if (fix != null) { sub.textContent = `фикс ${f2(fix)}%`; sub.style.color = 'var(--text3)'; }
+  });
+
+  // Curve
+  const cr = {};
+  if (onLast != null) cr.ON = onLast;
+  ['1W', '2W', '1M', '3M'].forEach(t => { const v = d[t]?.value; if (v != null) cr[t] = v; });
+  drawCurve(cr);
+}
+
+// Fetch current rates
+async function fetchData() {
+  try {
+    const r = await fetch('/api/rusfar');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    render(j.data);
+    cd = 60;
+  } catch (e) {
+    render({});
+    $('err').textContent = `⚠ ${e.message} · ${manualON ? 'показаны ручные данные' : 'нет данных'}`;
+    $('err').style.display = 'block';
+  }
+}
+
+// Fetch history from API
+async function fetchHistory() {
+  try {
+    const r = await fetch('/api/rusfar-history');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    if (j.history && j.history.length) {
+      HISTORY = j.history;
+      historyLoaded = true;
+      rh();
+    }
+  } catch (e) {
+    console.warn('История RUSFAR не загружена:', e.message);
+    // Показываем пустой график
+    drawHist([]);
+  }
+}
+
+// History controls
+let hN = 6;
+function rh() { drawHist(HISTORY.slice(-hN)); }
+document.querySelectorAll('.pb').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.pb').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  hN = +b.dataset.n;
+  rh();
+}));
+
+// Manual modal
+$('manual-btn').addEventListener('click', () => {
+  $('m-val').value = manualON?.value ?? '';
+  $('m-date').value = manualON ? fmtDate(manualON.date) : '';
+  $('modal').classList.add('open');
+});
+$('m-cancel').addEventListener('click', () => $('modal').classList.remove('open'));
+$('m-save').addEventListener('click', () => {
+  const v = parseFloat($('m-val').value);
+  const dRaw = $('m-date').value.trim();
+  if (!isNaN(v)) {
+    manualON = { value: v, date: '' };
+    if (dRaw.includes('.')) {
+      const [d, m, y] = dRaw.split('.');
+      manualON.date = `${y}-${m}-${d}`;
+    } else {
+      manualON.date = dRaw;
+    }
+    fetchData();
+  }
+  $('modal').classList.remove('open');
+});
+
+// Init
+fetchHistory();
+fetchData();
+setInterval(fetchData, POLL_MS);
+// История обновляется раз в час (данные не меняются внутри дня)
+setInterval(fetchHistory, 3600000);
+</script>
+</body>
+</html>

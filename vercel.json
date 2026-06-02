@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/api/rusfar",         "destination": "/api/rusfar.js" },
+    { "source": "/api/rusfar-history", "destination": "/api/rusfar-history.js" },
+    { "source": "/api/debug",          "destination": "/api/debug.js" },
+    { "source": "/(.*)",               "destination": "/public/index.html" }
+  ]
+}
